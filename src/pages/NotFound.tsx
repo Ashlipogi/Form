@@ -1,24 +1,34 @@
-import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import { Home, AlertTriangle } from 'lucide-react';
 
 const NotFound = () => {
-  const location = useLocation();
-
-  useEffect(() => {
-    console.error(
-      "404 Error: User attempted to access non-existent route:",
-      location.pathname
-    );
-  }, [location.pathname]);
+  const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">404</h1>
-        <p className="text-xl text-gray-600 mb-4">Oops! Page not found</p>
-        <a href="/" className="text-blue-500 hover:text-blue-700 underline">
-          Return to Home
-        </a>
+    <div className="brutalist-container">
+      <div className="brutalist-form-wrapper">
+        <div className="brutalist-header">
+          <div className="brutalist-error-icon mb-4">
+            <AlertTriangle size={80} className="text-black" strokeWidth={4} />
+          </div>
+          <h1 className="brutalist-title">PAGE NOT FOUND</h1>
+          <div className="brutalist-underline"></div>
+        </div>
+
+        <div className="brutalist-error-content">
+          <p className="brutalist-error-description">
+            THE PAGE YOU'RE LOOKING FOR DOESN'T EXIST
+          </p>
+          
+          <Button
+            onClick={() => navigate('/')}
+            className="brutalist-submit-btn mt-6"
+          >
+            <Home size={20} className="mr-2" />
+            GO HOME
+          </Button>
+        </div>
       </div>
     </div>
   );

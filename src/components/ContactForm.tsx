@@ -20,14 +20,21 @@ const ContactForm = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Get recipient email from localStorage
+  const getRecipientEmail = () => {
+    return localStorage.getItem('default_recipient_email') || '';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
 
+    const recipientEmail = getRecipientEmail();
+
     try {
       // Send email to owner first
-      console.log('Sending owner email...');
+      console.log('Sending owner email to:', recipientEmail);
       await emailjs.send(
         SERVICE_ID,
         TEMPLATE_ID_OWNER,
@@ -35,12 +42,12 @@ const ContactForm = () => {
           name: formData.name,
           email: formData.email,
           contact: formData.contactNumber,
-          to_email: 'villanuevajohn519@gmail.com',
+          to_email: recipientEmail,
         },
         PUBLIC_KEY
       );
       console.log('Owner email sent successfully');
-
+    const customizeLink = localStorage.getItem('customize_link') || '';
       // Send thank you email to client
       console.log('Sending client email...');
       const clientEmailResponse = await emailjs.send(
@@ -50,7 +57,8 @@ const ContactForm = () => {
           to_name: formData.name,
           to_email: formData.email,
           name: formData.name, // Adding this for compatibility
-          email: formData.email, // Adding this for compatibility
+          email: formData.email, 
+          url: customizeLink, 
         },
         PUBLIC_KEY
       );

@@ -16,6 +16,11 @@ const Index = () => {
     contactNumber: string;
   }>(null);
 
+  // Get recipient email from localStorage
+  const getRecipientEmail = () => {
+    return localStorage.getItem('default_recipient_email') || '';
+  };
+
   const handleSubmit = async (formData: {
     name: string;
     email: string;
@@ -23,8 +28,11 @@ const Index = () => {
   }) => {
     setIsSubmitting(true);
 
+    const recipientEmail = getRecipientEmail();
+const customizeLink = localStorage.getItem('customize_link') || '';
     try {
       // Send to form owner
+      console.log('Sending owner email to:', recipientEmail);
       await emailjs.send(
         SERVICE_ID,
         TEMPLATE_ID_OWNER,
@@ -32,7 +40,7 @@ const Index = () => {
           name: formData.name,
           email: formData.email,
           contact: formData.contactNumber,
-          to_email: 'villanuevajohn519@gmail.com',
+          to_email: recipientEmail,
         },
         PUBLIC_KEY
       );
@@ -44,6 +52,7 @@ const Index = () => {
         {
           to_name: formData.name,
           to_email: formData.email,
+           url: customizeLink,
         },
         PUBLIC_KEY
       );
