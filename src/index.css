@@ -104,7 +104,46 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+.brutalist-error {
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: 2px solid #b91c1c;
+}
 
+.brutalist-success-wrapper {
+  text-align: center;
+  padding: 2rem;
+}
+
+.brutalist-success-icon {
+  margin-bottom: 1.5rem;
+}
+
+.brutalist-success-title {
+  font-size: 1.875rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.brutalist-success-message {
+  margin: 1.5rem 0;
+  font-size: 1.125rem;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
 /* Brutalist Design System */
 .brutalist-bg {
   background: white;
