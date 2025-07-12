@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, Save, Mail, Link } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Edit = () => {
   const [defaultEmail, setDefaultEmail] = useState('');
@@ -10,7 +11,7 @@ const Edit = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-
+const navigate = useNavigate();
   useEffect(() => {
     // Load saved data from localStorage
     const savedEmail = localStorage.getItem('default_recipient_email');
@@ -80,14 +81,15 @@ const Edit = () => {
     <div className="brutalist-container">
       <div className="brutalist-form-wrapper">
         <div className="brutalist-header">
-          <Button
-            onClick={() => window.history.back()}
+            <Button
+            onClick={() => navigate('/')}
             className="brutalist-back-btn mb-4"
             variant="outline"
-          >
+            >
             <ArrowLeft size={20} className="mr-2" />
             BACK TO CONTACT
-          </Button>
+            </Button>
+
           
           <h1 className="brutalist-title">EMAIL TEMPLATE SETTINGS</h1>
           <div className="brutalist-underline"></div>
