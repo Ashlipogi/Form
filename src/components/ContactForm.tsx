@@ -26,6 +26,8 @@ const ContactForm = () => {
     setError(null);
 
     try {
+      // Send email to owner first
+      console.log('Sending owner email...');
       await emailjs.send(
         SERVICE_ID,
         TEMPLATE_ID_OWNER,
@@ -37,21 +39,36 @@ const ContactForm = () => {
         },
         PUBLIC_KEY
       );
+      console.log('Owner email sent successfully');
 
-      await emailjs.send(
+      // Send thank you email to client
+      console.log('Sending client email...');
+      const clientEmailResponse = await emailjs.send(
         SERVICE_ID,
         TEMPLATE_ID_CLIENT,
         {
           to_name: formData.name,
           to_email: formData.email,
+          name: formData.name, // Adding this for compatibility
+          email: formData.email, // Adding this for compatibility
         },
         PUBLIC_KEY
       );
+      console.log('Client email sent successfully:', clientEmailResponse);
 
       setIsSubmitted(true);
     } catch (err: any) {
       console.error('Submission error:', err);
-      setError(err?.text || err?.message || 'An unknown error occurred');
+      
+      // More detailed error logging
+      if (err.status) {
+        console.error('Error status:', err.status);
+      }
+      if (err.text) {
+        console.error('Error text:', err.text);
+      }
+      
+      setError(err?.text || err?.message || `Error ${err?.status || 'unknown'}: Failed to send email`);
     } finally {
       setIsSubmitting(false);
     }
@@ -90,6 +107,7 @@ const ContactForm = () => {
         {error && (
           <div className="brutalist-error">
             <p>Error: {error}</p>
+            <p className="text-sm mt-2">Check the browser console for more details.</p>
           </div>
         )}
 
