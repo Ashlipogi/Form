@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import emailjs from '@emailjs/browser';
+import SubmissionSuccess from '@/components/SubmissionSuccess';
 
 const SERVICE_ID = 'service_obxutde';
 const TEMPLATE_ID_OWNER = 'template_icp86z7';
@@ -25,7 +26,6 @@ const ContactForm = () => {
     setError(null);
 
     try {
-      // Send to form owner
       await emailjs.send(
         SERVICE_ID,
         TEMPLATE_ID_OWNER,
@@ -38,7 +38,6 @@ const ContactForm = () => {
         PUBLIC_KEY
       );
 
-      // Send thank-you to client
       await emailjs.send(
         SERVICE_ID,
         TEMPLATE_ID_CLIENT,
@@ -77,36 +76,7 @@ const ContactForm = () => {
   };
 
   if (isSubmitted) {
-    return (
-      <div className="brutalist-container">
-        <div className="brutalist-success-wrapper">
-          <div className="brutalist-success-icon">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="80"
-              height="80"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-              <polyline points="22 4 12 14.01 9 11.01" />
-            </svg>
-          </div>
-          <h1 className="brutalist-success-title">THANK YOU!</h1>
-          <div className="brutalist-underline brutalist-underline-success"></div>
-          <p className="brutalist-success-message">
-            We've received your information and sent a confirmation to your email.
-          </p>
-          <Button onClick={resetForm} className="brutalist-submit-btn">
-            SUBMIT ANOTHER
-          </Button>
-        </div>
-      </div>
-    );
+    return <SubmissionSuccess onReset={resetForm} formData={formData} />;
   }
 
   return (
