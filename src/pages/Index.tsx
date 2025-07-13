@@ -1,7 +1,8 @@
 import ContactForm from '@/components/ContactForm';
 import SubmissionSuccess from '@/components/SubmissionSuccess';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import emailjs from '@emailjs/browser';
+import { supabase } from '@/lib/supabaseClient';
 
 const SERVICE_ID = 'service_obxutde';
 const TEMPLATE_ID_OWNER = 'template_icp86z7';
@@ -16,10 +17,29 @@ const Index = () => {
     contactNumber: string;
   }>(null);
 
-  // Get recipient email from localStorage
-  const getRecipientEmail = () => {
-    return localStorage.getItem('default_recipient_email') || '';
-  };
+  const [recipientEmail, setRecipientEmail] = useState('');
+  const [customizeLink, setCustomizeLink] = useState('');
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const { data, error } = await supabase
+        .from('form_settings')
+        .select('default_email, customize_link')
+        .limit(1)
+        .single();
+
+      if (error) {
+        console.error('Failed to load settings:', error.message);
+        alert('Failed to load email settings. Please contact support.');
+        return;
+      }
+
+      setRecipientEmail(data.default_email || '');
+      setCustomizeLink(data.customize_link || '');
+    };
+
+    fetchSettings();
+  }, []);
 
   const handleSubmit = async (formData: {
     name: string;
@@ -28,11 +48,8 @@ const Index = () => {
   }) => {
     setIsSubmitting(true);
 
-    const recipientEmail = getRecipientEmail();
-const customizeLink = localStorage.getItem('customize_link') || '';
     try {
       // Send to form owner
-      console.log('Sending owner email to:', recipientEmail);
       await emailjs.send(
         SERVICE_ID,
         TEMPLATE_ID_OWNER,
@@ -52,7 +69,7 @@ const customizeLink = localStorage.getItem('customize_link') || '';
         {
           to_name: formData.name,
           to_email: formData.email,
-           url: customizeLink,
+          url: customizeLink,
         },
         PUBLIC_KEY
       );

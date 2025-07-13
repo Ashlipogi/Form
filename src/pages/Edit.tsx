@@ -4,54 +4,134 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, Save, Mail, Link } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/lib/supabaseClient';
 
 const Edit = () => {
   const [defaultEmail, setDefaultEmail] = useState('');
   const [customizeLink, setCustomizeLink] = useState('');
+  const [currentSettingsId, setCurrentSettingsId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-const navigate = useNavigate();
+  const [error, setError] = useState<string | null>(null);
+
+  const navigate = useNavigate();
+
   useEffect(() => {
-    // Load saved data from localStorage
-    const savedEmail = localStorage.getItem('default_recipient_email');
-    const savedLink = localStorage.getItem('customize_link');
-    setDefaultEmail(savedEmail || '');
-    setCustomizeLink(savedLink || '');
-    setIsLoading(false);
+    const fetchSettings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('form_settings')
+          .select('id, default_email, customize_link')
+          .limit(1);
+
+        if (error) {
+          console.error('Fetch error:', error.message);
+          setError('Failed to load settings from database');
+          setIsLoading(false);
+          return;
+        }
+
+        // Handle case where no data exists
+        if (!data || data.length === 0) {
+          console.log('No settings found, will create new entry');
+          setCurrentSettingsId(null);
+          setDefaultEmail('');
+          setCustomizeLink('');
+        } else {
+          // Use the first (and should be only) row
+          const settings = data[0];
+          setCurrentSettingsId(settings.id);
+          setDefaultEmail(settings.default_email || '');
+          setCustomizeLink(settings.customize_link || '');
+        }
+      } catch (err) {
+        console.error('Error fetching settings:', err);
+        setError('Failed to load settings');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSettings();
   }, []);
 
   const handleSave = async () => {
     setIsSaving(true);
-    
-    // Simulate a brief save operation
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Save to localStorage
-    localStorage.setItem('default_recipient_email', defaultEmail);
-    localStorage.setItem('customize_link', customizeLink);
-    
-    setIsSaving(false);
-    setSaveSuccess(true);
-    
-    // Hide success message after 2 seconds
-    setTimeout(() => setSaveSuccess(false), 2000);
+    setError(null);
+
+    try {
+      let result;
+      
+      if (currentSettingsId) {
+        // Update existing record
+        result = await supabase
+          .from('form_settings')
+          .update({
+            default_email: defaultEmail,
+            customize_link: customizeLink
+          })
+          .eq('id', currentSettingsId);
+      } else {
+        // Insert new record (let Supabase generate UUID)
+        result = await supabase
+          .from('form_settings')
+          .insert({
+            default_email: defaultEmail,
+            customize_link: customizeLink
+          })
+          .select('id')
+          .single();
+          
+        if (result.data) {
+          setCurrentSettingsId(result.data.id);
+        }
+      }
+
+      if (result.error) {
+        console.error('Save error:', result.error.message);
+        setError(`Save failed: ${result.error.message}`);
+      } else {
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 2000);
+      }
+    } catch (err: any) {
+      console.error('Save error:', err);
+      setError(`Save failed: ${err.message || 'Unknown error'}`);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleClear = () => {
+  const handleClear = async () => {
     setDefaultEmail('');
     setCustomizeLink('');
-    localStorage.removeItem('default_recipient_email');
-    localStorage.removeItem('customize_link');
-    setSaveSuccess(false);
+    
+    if (currentSettingsId) {
+      // Clear the existing record
+      setIsSaving(true);
+      const { error } = await supabase
+        .from('form_settings')
+        .update({
+          default_email: '',
+          customize_link: ''
+        })
+        .eq('id', currentSettingsId);
+        
+      if (error) {
+        console.error('Clear error:', error.message);
+        setError(`Clear failed: ${error.message}`);
+      } else {
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 2000);
+      }
+      setIsSaving(false);
+    }
   };
 
-  const isValidEmail = (email: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
-
+  const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const isValidUrl = (url: string) => {
-    if (!url) return true; // Allow empty URL
+    if (!url) return true;
     try {
       new URL(url);
       return true;
@@ -60,10 +140,11 @@ const navigate = useNavigate();
     }
   };
 
-  const canSave = defaultEmail.trim() !== '' && 
-                  isValidEmail(defaultEmail) && 
-                  (customizeLink === '' || isValidUrl(customizeLink)) && 
-                  !isSaving;
+  const canSave =
+    defaultEmail.trim() !== '' &&
+    isValidEmail(defaultEmail) &&
+    (customizeLink === '' || isValidUrl(customizeLink)) &&
+    !isSaving;
 
   if (isLoading) {
     return (
@@ -81,19 +162,24 @@ const navigate = useNavigate();
     <div className="brutalist-container">
       <div className="brutalist-form-wrapper">
         <div className="brutalist-header">
-            <Button
+          <Button
             onClick={() => navigate('/')}
             className="brutalist-back-btn mb-4"
             variant="outline"
-            >
+          >
             <ArrowLeft size={20} className="mr-2" />
             BACK TO CONTACT
-            </Button>
+          </Button>
 
-          
           <h1 className="brutalist-title">EMAIL TEMPLATE SETTINGS</h1>
           <div className="brutalist-underline"></div>
         </div>
+
+        {error && (
+          <div className="brutalist-error">
+            <p>Error: {error}</p>
+          </div>
+        )}
 
         {saveSuccess && (
           <div className="brutalist-success-message">
@@ -160,27 +246,26 @@ const navigate = useNavigate();
               <div className="brutalist-info-item">
                 <span className="brutalist-info-label">DEFAULT EMAIL:</span>
                 <span className="brutalist-info-value">
-                  {localStorage.getItem('default_recipient_email') || 'No default email set'}
+                  {defaultEmail || 'No default email set'}
                 </span>
               </div>
-<div className="brutalist-info-item mt-2">
-  <span className="brutalist-info-label">CUSTOMIZE LINK:</span>
-  <span className="brutalist-info-value">
-    {customizeLink ? (
-      <a
-        href={customizeLink}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="underline text-blue-600 hover:text-blue-800 font-semibold"
-      >
-        View Google Drive Folder
-      </a>
-    ) : (
-      'No Link'
-    )}
-  </span>
-</div>
-
+              <div className="brutalist-info-item mt-2">
+                <span className="brutalist-info-label">CUSTOMIZE LINK:</span>
+                <span className="brutalist-info-value">
+                  {customizeLink ? (
+                    <a
+                      href={customizeLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline text-blue-600 hover:text-blue-800 font-semibold"
+                    >
+                      View Google Drive Folder
+                    </a>
+                  ) : (
+                    'No Link'
+                  )}
+                </span>
+              </div>
             </div>
           </div>
 
